@@ -9,6 +9,14 @@ export class GenerateInput implements GenerateRequest {
     collectionId?: string;
     @Field({nullable: true})
     modelId?: string;
+    @Field({nullable: true})
+    min_new_tokens?: number;
+    @Field({nullable: true})
+    max_new_tokens?: number;
+    @Field({nullable: true})
+    decoding_method?: string;
+    @Field({nullable: true})
+    repetition_penalty?: number;
 }
 
 @ObjectType()

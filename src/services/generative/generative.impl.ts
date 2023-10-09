@@ -6,7 +6,6 @@ import {BaseRetriever} from "langchain/schema/retriever";
 import {RunnablePassthrough, RunnableSequence} from "langchain/schema/runnable";
 
 import {GenerateRequest, GenerateResult, GenerativeApi} from "./generative.api";
-import {getWatsonxLLMParams, WatsonxLLM} from "../../langchain";
 import {documentManagementApi, DocumentManagementApi} from "../document-management";
 import {modelManagementApi, ModelManagementApi} from "../model-management";
 
@@ -19,7 +18,7 @@ export class GenerativeImpl implements GenerativeApi {
 
     async generate(input: GenerateRequest): Promise<GenerateResult> {
 
-        const model: LLM = await this.models.getModel(input.modelId);
+        const model: LLM = await this.models.getModel(input);
 
         const retriever: BaseRetriever = await this.store.asRetriever(input);
 
