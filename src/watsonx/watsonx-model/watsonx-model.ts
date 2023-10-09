@@ -1,7 +1,7 @@
 import Axios, {AxiosInstance} from 'axios';
-import pThrottle from 'p-throttle';
 
-import {delay} from "../../util/delay";
+import {delay, pThrottle} from "../../util";
+import {IamTokenManager} from "ibm-cloud-sdk-core";
 
 const throttle = pThrottle({
     limit: 2,
@@ -27,7 +27,8 @@ export interface GenerativeResponse {
 }
 
 export interface GenerativeConfig {
-    accessToken: string;
+    apiKey: string;
+    identityUrl: string;
     projectId?: string;
     endpoint: string;
     modelId?: string;
@@ -50,24 +51,32 @@ interface GenerativeBackendResponseResult {
 export type GenerateFunction = (input: string) => Promise<GenerativeResponse>;
 
 export class WatsonxModel {
-    private readonly client: AxiosInstance;
-    private readonly projectId?: string;
     private readonly url: string;
     private readonly modelId?: string;
+    private readonly projectId?: string;
 
-    constructor(config: GenerativeConfig) {
-        this.client = Axios.create({
-            baseURL: config.endpoint,
+    constructor(private readonly config: GenerativeConfig) {
+        this.url = config.endpoint;
+        this.projectId = config.projectId;
+        this.modelId = config.modelId;
+    }
+
+    async getClient(): Promise<AxiosInstance> {
+        // TODO can any of this be cached?
+
+        const accessToken = await new IamTokenManager({
+            apikey: this.config.apiKey,
+            url: this.config.identityUrl,
+        }).getToken()
+
+        return Axios.create({
+            baseURL: this.config.endpoint,
             headers: {
-                Authorization: `Bearer ${config.accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
                 "Content-Type": 'application/json',
                 Accept: 'application/json',
             },
         })
-
-        this.url = config.endpoint;
-        this.projectId = config.projectId;
-        this.modelId = config.modelId;
     }
 
     generateFunction(config: Omit<GenerativeInput, 'input'>): GenerateFunction {
@@ -75,22 +84,33 @@ export class WatsonxModel {
     }
 
     async generate(input: GenerativeInput): Promise<GenerativeResponse> {
-        return this.generateInternal(input, 0);
+        const client: AxiosInstance = await this.getClient();
+
+        return this.generateInternal(client, input, 0);
     }
 
-    private async generateInternal(params: GenerativeInput, retryCount: number = 0): Promise<GenerativeResponse> {
+    private async generateInternal(client: AxiosInstance, params: GenerativeInput, retryCount: number = 0): Promise<GenerativeResponse> {
         const input = params.input.slice(0, Math.min(4096, params.input.length))
 
+
         const throttledGenerate = throttle(async (genParams: GenerativeInput) => {
-            return this.client
-                .post<GenerativeBackendResponse>(this.url, {
-                    model_id: genParams.modelId || this.modelId,
-                    input,
-                    parameters: genParams.parameters,
-                    project_id: genParams.projectId || this.projectId,
-                })
+            const data = {
+                model_id: genParams.modelId || this.modelId,
+                input,
+                parameters: genParams.parameters,
+                project_id: genParams.projectId || this.projectId,
+            }
+
+            console.log('Making generative request: ', data)
+
+            return client
+                .post<GenerativeBackendResponse>(this.url, data)
                 .then(result => {
                     return {generatedText: result.data.results[0].generated_text};
+                })
+                .catch(err => {
+                    console.error('Error generating text: ', {err})
+                    throw err
                 })
         })
 
@@ -99,7 +119,7 @@ export class WatsonxModel {
                 const status = err.response?.status;
                 if (status == 429 && retryCount < 4) {
                     console.log('Too many requests!!! Retrying: ' + (retryCount + 1))
-                    return delay(1000 * Math.random(), () => this.generateInternal(params, retryCount + 1))
+                    return delay(1000 * Math.random(), () => this.generateInternal(client, params, retryCount + 1))
                 }
 
                 console.log('Error generating text: ', err);

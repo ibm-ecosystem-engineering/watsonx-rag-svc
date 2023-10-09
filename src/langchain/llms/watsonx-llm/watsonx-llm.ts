@@ -14,7 +14,8 @@ export interface WatsonxLLMCallOptions extends BaseLLMCallOptions {
 }
 
 export interface WatsonxLLMParams extends BaseLLMParams {
-    accessToken: string;
+    apiKey: string;
+    identityUrl: string;
     endpoint: string;
     projectId?: string;
     modelId?: string;
@@ -39,7 +40,8 @@ export class WatsonxLLM extends LLM<WatsonxLLMCallOptions> {
         )
 
         this.engine = new WatsonxModel({
-            accessToken: fields?.accessToken,
+            apiKey: fields?.apiKey,
+            identityUrl: fields?.identityUrl,
             endpoint: fields?.endpoint,
             projectId: fields?.projectId,
             modelId: fields?.modelId,

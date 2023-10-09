@@ -12,7 +12,13 @@ import {
     RetrieverParams
 } from "./document-management.api";
 import {streamToBuffer} from "../../util";
-import {CreateCollectionResult, DiscoveryStore, ListCollectionsResult, ListDocumentsResult} from "../../langchain";
+import {
+    CreateCollectionResult,
+    discoveryStore,
+    DiscoveryStore, getDiscoveryStoreParams,
+    ListCollectionsResult,
+    ListDocumentsResult
+} from "../../langchain";
 import {contentStoreApi, ContentStoreApi} from "../content-store";
 
 interface DiscoveryConfig {
@@ -25,9 +31,10 @@ interface DiscoveryConfig {
 
 export class DocumentManagementDiscovery implements DocumentManagementApi {
 
-    discovery: DiscoveryStore;
-
-    constructor(private readonly store: ContentStoreApi = contentStoreApi()) {}
+    constructor(
+        private readonly store: ContentStoreApi = contentStoreApi(),
+        private readonly discovery: DiscoveryStore = discoveryStore(getDiscoveryStoreParams()),
+    ) {}
 
     async addDocument(params: AddDocumentParams): Promise<AddDocumentResult> {
         const {projectId, collectionId} = await this.getDiscoveryConfig(params.collectionId)

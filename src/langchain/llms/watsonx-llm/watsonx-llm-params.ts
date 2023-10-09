@@ -10,10 +10,11 @@ export interface WatsonxLLmParams {
 
 export const getWatsonxLLMParams = (input: WatsonxLLmParams): WatsonxLLMParams => {
     const params = {
-        accessToken: process.env.WML_ACCESS_TOKEN,
+        apiKey: process.env.WML_API_KEY,
+        identityUrl: process.env.IAM_URL,
         endpoint: process.env.WLM_ENDPOINT,
         projectId: process.env.WLM_PROJECT_ID,
-        modelId: input.modelId || process.env.WLM_MODEL_ID || 'granite-13b-chat-v1',
+        modelId: input.modelId || process.env.WLM_MODEL_ID || 'ibm/granite-13b-chat-v1',
         config: {
             batchSize: parseInt(process.env.LLM_BATCH_SIZE || '4096'),
             min_new_tokens: input.min_new_tokens || parseInt(process.env.LLM_MIN_NEW_TOKENS || '1'),
@@ -23,7 +24,7 @@ export const getWatsonxLLMParams = (input: WatsonxLLmParams): WatsonxLLMParams =
         }
     }
 
-    if (!params.accessToken || !params.endpoint || !params.projectId) {
+    if (!params.apiKey || !params.endpoint || !params.projectId) {
         throw new Error('WML_ACCESS_TOKEN, WLM_ENDPOINT, or WLM_PROJECT_ID env variable not set')
     }
 

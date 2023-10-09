@@ -1,6 +1,6 @@
-import pThrottle from "p-throttle";
 import DiscoveryV2 = require("ibm-watson/discovery/v2");
 import {UserOptions} from "ibm-cloud-sdk-core";
+import {pThrottle} from '../../util'
 
 const throttle = pThrottle({
     limit: 5,

@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/nodejs-18:1-62.1692771036 AS builder
+FROM registry.access.redhat.com/ubi9/nodejs-18:1-70.1695740477 AS builder
 
 WORKDIR /opt/app-root/src
 
@@ -9,7 +9,7 @@ RUN mkdir -p /opt/app-root/src/node_modules && \
     npm ci && \
     npm run build
 
-FROM registry.access.redhat.com/ubi9/nodejs-18-minimal:1-67
+FROM registry.access.redhat.com/ubi9/nodejs-18:1-70.1695740477
 
 ## Uncomment the below lines to update image security content if any
 # USER root
@@ -40,5 +40,5 @@ ENV HOST=0.0.0.0 PORT=3000
 
 EXPOSE 3000/tcp
 
-CMD ["npm", "run", "start"]
-
+#CMD ["npm", "run", "start"]
+CMD [ "node", "dist/src/main.js" ]

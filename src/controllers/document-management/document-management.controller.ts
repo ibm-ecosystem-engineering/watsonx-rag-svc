@@ -20,8 +20,26 @@ import {
 import {CreateCollectionResult, DocumentMetadata, ListCollectionsResult, ListDocumentsResult} from "../../langchain";
 import {FileInterceptor} from "@nestjs/platform-express";
 import {getType} from "mime";
+import {ApiProperty, ApiQuery, ApiTags} from "@nestjs/swagger";
+import {handleOptionalNumber} from "../generative";
 
+class CreateCollection implements CreateCollectionParams {
+    @ApiProperty()
+    name: string;
+    @ApiProperty({required: false})
+    description?: string;
+}
 
+class AddDocument {
+    @ApiProperty()
+    name: string;
+    @ApiProperty({required: false})
+    collectionId?: string;
+    @ApiProperty({required: false})
+    metadata?: any
+}
+
+@ApiTags('documents')
 @Controller('documents')
 export class DocumentManagementController {
     constructor(private readonly service: DocumentManagementApi) {}
@@ -33,15 +51,33 @@ export class DocumentManagementController {
 
     @Post('collection')
     async createCollection(
-        @Body() params: CreateCollectionParams
+        @Body() params: CreateCollection
     ): Promise<CreateCollectionResult> {
         return this.service.createCollection(params)
     }
 
+    @ApiQuery({
+        name: "collectionId",
+        type: String,
+        description: "The collection id to look for the document. If not provide, will use the default collection id.",
+        required: false
+    })
+    @ApiQuery({
+        name: "count",
+        type: Number,
+        description: "The number of documents to retrieve. If not provided the default will be used.",
+        required: false
+    })
+    @ApiQuery({
+        name: "status",
+        type: [String],
+        description: "The status values to search for. If not provided all statuses will be searched.",
+        required: false
+    })
     @Get('document')
     async listDocuments(
         @Query('collectionId') collectionId?: string,
-        @Query('count') count?: number,
+        @Query('count') count?: string,
         @Query('status') status?: string[]
     ): Promise<ListDocumentsResult> {
         const statuses: string[] = Array.isArray(status) ? status : (status ? [status] : undefined)
@@ -49,7 +85,7 @@ export class DocumentManagementController {
         return this.service
             .listDocuments({
                 collectionId,
-                count,
+                count: handleOptionalNumber(count),
                 statuses,
             })
             .then(result => ({
@@ -58,24 +94,54 @@ export class DocumentManagementController {
             }))
     }
 
+    @ApiQuery({
+        name: "query",
+        type: String,
+        description: "The natural language query for the document repository",
+        required: true
+    })
+    @ApiQuery({
+        name: "collectionId",
+        type: String,
+        description: "The collection id to look for the document. If not provide, will use the default collection id.",
+        required: false
+    })
+    @ApiQuery({
+        name: "count",
+        type: Number,
+        description: "The number of documents to retrieve. If not provided the default will be used.",
+        required: false
+    })
+    @ApiQuery({
+        name: "documentPassages",
+        type: Boolean,
+        description: "Flag indicating that passages should be returned per document",
+        required: false
+    })
+    @ApiQuery({
+        name: "answers",
+        type: Boolean,
+        description: "Flag indicating that answers should be returned per passage",
+        required: false
+    })
     @Get('query')
     async query(
         @Query('query') query: string,
         @Query('collectionId') collectionId?: string,
-        @Query('count') count?: number,
-        @Query('status') status?: string[],
-        @Query('documentPassages') documentPassages?: boolean,
-        @Query('answers') answers?: boolean,
+        @Query('count') count?: string,
+        @Query('documentPassages') documentPassages?: string,
+        @Query('answers') answers?: string,
     ): Promise<QueryDocumentsResult> {
+
         return this.service.query({
             naturalLanguageQuery: query,
             collectionId,
-            count,
+            count: handleOptionalNumber(count),
             passages: {
                 enabled: true,
-                per_document: !!documentPassages,
+                per_document: handleOptionalBoolean(documentPassages),
                 max_per_document: 5,
-                find_answers: !!answers,
+                find_answers: handleOptionalBoolean(answers),
                 max_answers_per_passage: 5,
             }
         })
@@ -83,7 +149,7 @@ export class DocumentManagementController {
 
     @Post('upload')
     @UseInterceptors(FileInterceptor('file'))
-    async addDocument(@Body() input: {name: string, collectionId?: string, metadata: any}, @UploadedFile() file: Express.Multer.File): Promise<AddDocumentResult> {
+    async addDocument(@Body() input: AddDocument, @UploadedFile() file: Express.Multer.File): Promise<AddDocumentResult> {
         return this.service.addDocument({
             collectionId: input.collectionId,
             filename: input.name,
@@ -139,4 +205,12 @@ export const mapDocumentPath = (basePath: string) => {
             {path}
         )
     }
+}
+
+export const handleOptionalBoolean = (value?: string): boolean | undefined => {
+    if (value === undefined) {
+        return undefined
+    }
+
+    return value === 'true'
 }
