@@ -9,7 +9,8 @@ import {
     DiscoveryConfig,
     DiscoveryStore,
     DiscoveryStoreParams,
-    DocumentProcessor, FindDocumentOptions,
+    DocumentProcessor,
+    FindDocumentOptions,
     ListCollectionsOptions,
     ListCollectionsResult,
     ListDocumentsOptions,
@@ -20,13 +21,13 @@ import {DiscoveryRetriever} from "../../retrievers";
 import {createDiscoveryV2} from "../../../watsonx";
 import {createHash} from "node:crypto";
 import {first} from "../../../util";
-import {response} from "express";
+import {getDiscoveryStoreParams} from "./discovery-store-params";
 
 export class DiscoveryStoreImpl implements DiscoveryStore {
     readonly discovery: DiscoveryV2;
     readonly config: DiscoveryConfig;
 
-    constructor(options: DiscoveryStoreParams) {
+    constructor(options: DiscoveryStoreParams = getDiscoveryStoreParams()) {
         this.discovery = createDiscoveryV2(options);
 
         this.config = {
