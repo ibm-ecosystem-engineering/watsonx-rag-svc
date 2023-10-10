@@ -8,7 +8,7 @@ export class GenerativeResolver {
     constructor(private readonly service: GenerativeApi) {
     }
 
-    @Query(() => [GenerateResultGraphql])
+    @Query(() => GenerateResultGraphql)
     async generate(
         @Args('input') input: GenerateInput
     ): Promise<GenerateResult> {

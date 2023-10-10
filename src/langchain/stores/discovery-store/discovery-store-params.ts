@@ -9,7 +9,7 @@ export const getDiscoveryStoreParams = (): DiscoveryStoreParams => {
         authenticator: new IamAuthenticator({
             apikey: process.env.DISCOVERY_API_KEY,
         }),
-        collectionId: process.env.DISCOVERY_COLLECTION_ID,
+        collectionId: process.env.DISCOVERY_DEFAULT_COLLECTION_ID,
         version: process.env.DISCOVERY_VERSION,
     }
 }

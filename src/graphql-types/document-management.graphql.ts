@@ -41,6 +41,8 @@ export class Document implements DocumentModel {
     filename: string;
     @Field()
     status: string;
+    @Field({nullable: true})
+    path?: string;
 }
 
 @InputType()

@@ -77,19 +77,21 @@ export interface CreateCollectionOptions {
     description?: string;
 }
 
-export interface CreateCollectionResult {
-    collectionId: string;
-    name: string;
-    description?: string;
+export interface GetDocumentOptions {
+    collectionId?: string;
+    documentId?: string;
+    projectId: string;
 }
+
 
 export abstract class DiscoveryStore {
     readonly discovery: DiscoveryV2;
     abstract addDocuments(documents: Document[], options?: AddDocumentOptions): Promise<string[] | void>;
     abstract addDocument(document: Document, options?: AddDocumentOptions): Promise<string>;
+    abstract getDocument(options: GetDocumentOptions): Promise<DocumentMetadata>;
     abstract listDocuments(options: ListDocumentsOptions): Promise<ListDocumentsResult>;
     abstract listCollections(options: ListCollectionsOptions): Promise<ListCollectionsResult>;
-    abstract createCollection(options: CreateCollectionOptions): Promise<CreateCollectionResult>;
+    abstract createCollection(options: CreateCollectionOptions): Promise<CollectionResult>;
     abstract findDocumentByContents(document: Document, options?: FindDocumentOptions): Promise<string>;
     abstract query(naturalLanguageQuery: string, options?: QueryDocumentOptions): Promise<Document[]>;
     abstract asRetriever(options?: QueryDocumentOptions): BaseRetriever;

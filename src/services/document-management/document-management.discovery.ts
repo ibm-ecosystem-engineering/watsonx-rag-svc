@@ -13,9 +13,9 @@ import {
 } from "./document-management.api";
 import {streamToBuffer} from "../../util";
 import {
-    CreateCollectionResult,
+    CollectionResult,
     discoveryStore,
-    DiscoveryStore, getDiscoveryStoreParams,
+    DiscoveryStore, DocumentMetadata, getDiscoveryStoreParams,
     ListCollectionsResult,
     ListDocumentsResult
 } from "../../langchain";
@@ -117,13 +117,17 @@ export class DocumentManagementDiscovery implements DocumentManagementApi {
             .then(response => response)
 
         return {
-            documents: result.documents.map(doc =>
-                ({
+            documents: await Promise.all(result.documents.map(async doc => {
+                const {filename, status} = doc.filename
+                    ? {filename: doc.filename, status: doc.status}
+                    : (await this.discovery.getDocument({projectId, collectionId, documentId: doc.documentId}).then((doc: DocumentMetadata) => ({filename: doc.filename, status: doc.status})));
+
+                return {
                     documentId: doc.documentId,
-                    filename: doc.filename,
-                    status: doc.status,
-                })
-            ),
+                    filename: filename || 'unknown',
+                    status: status || 'unknown',
+                }
+            })),
             count: result.count,
         }
     }
@@ -147,16 +151,25 @@ export class DocumentManagementDiscovery implements DocumentManagementApi {
         }
     }
 
-    async listCollections(params: ListCollectionsParams): Promise<ListCollectionsResult> {
-        const {projectId} = await this.getDiscoveryConfig(undefined, false)
+    async listCollections(params: ListCollectionsParams = {includeDefault: false}): Promise<ListCollectionsResult> {
+        const {projectId, collectionId} = await this.getDiscoveryConfig()
 
         return this.discovery
             .listCollections({
                 projectId
             })
+            .then(result => {
+                if (params?.includeDefault) {
+                    return result
+                }
+
+                return {
+                    collections: result.collections.filter(c => c.collectionId !== collectionId)
+                }
+            })
     }
 
-    async createCollection(params: CreateCollectionParams): Promise<CreateCollectionResult> {
+    async createCollection(params: CreateCollectionParams): Promise<CollectionResult> {
         const {projectId} = await this.getDiscoveryConfig(undefined, false)
 
         return this.discovery

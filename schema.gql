@@ -18,6 +18,7 @@ input CreateCollectionInput {
 type Document {
   documentId: String!
   filename: String!
+  path: String
   status: String!
 }
 
@@ -73,10 +74,10 @@ type Mutation {
 }
 
 type Query {
-  generate(input: GenerateInput!): [GenerateResultGraphql!]!
+  generate(input: GenerateInput!): GenerateResultGraphql!
   helloWorld: Greeting!
-  listCollections: [ListCollections!]!
-  listDocuments(input: ListDocumentsInput!): [ListDocuments!]!
+  listCollections: ListCollections!
+  listDocuments(input: ListDocumentsInput!): ListDocuments!
   query(input: QueryDocumentsInput!): QueryDocuments!
 }
 

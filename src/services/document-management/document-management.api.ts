@@ -1,6 +1,6 @@
 import {QueryLargePassages} from "ibm-watson/discovery/v2";
 import {BaseRetriever} from "langchain/schema/retriever";
-import {CreateCollectionResult, ListCollectionsResult, ListDocumentsResult} from "../../langchain";
+import {CollectionResult, ListCollectionsResult, ListDocumentsResult} from "../../langchain";
 
 export interface AddDocumentParams {
     collectionId?: string;
@@ -24,6 +24,7 @@ export interface DocumentModel {
     documentId: string;
     filename: string;
     status: string;
+    path?: string;
 }
 
 export interface QueryDocumentsParams {
@@ -49,6 +50,7 @@ export interface RetrieverParams {
 }
 
 export interface ListCollectionsParams {
+    includeDefault?: boolean;
 }
 
 export interface CreateCollectionParams {
@@ -68,7 +70,7 @@ export interface GetDocumentResult {
 
 export abstract class DocumentManagementApi {
     abstract listCollections(params?: ListCollectionsParams): Promise<ListCollectionsResult>;
-    abstract createCollection(params: CreateCollectionParams): Promise<CreateCollectionResult>;
+    abstract createCollection(params: CreateCollectionParams): Promise<CollectionResult>;
     abstract listDocuments(params: ListDocumentsParams): Promise<ListDocumentsResult>;
     abstract addDocument(params: AddDocumentParams): Promise<AddDocumentResult>;
     abstract getDocument(params: GetDocumentParams): Promise<GetDocumentResult>;

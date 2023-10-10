@@ -1,6 +1,6 @@
 import {Args, Mutation, Query, Resolver} from "@nestjs/graphql";
-import {DocumentDetailModel, DocumentManagementApi, QueryDocumentsResult} from "../../services";
-import {CreateCollectionResult, ListCollectionsResult, ListDocumentsResult} from "../../langchain";
+import {DocumentDetailModel, DocumentManagementApi, ListCollectionsParams, QueryDocumentsResult} from "../../services";
+import {CollectionResult, ListCollectionsResult, ListDocumentsResult} from "../../langchain";
 import {
     Collection,
     CreateCollectionInput,
@@ -17,19 +17,19 @@ import {
 export class DocumentManagementResolver {
     constructor(private readonly service: DocumentManagementApi) {}
 
-    @Query(() => [ListCollections])
-    async listCollections(): Promise<ListCollectionsResult> {
-        return this.service.listCollections();
+    @Query(() => ListCollections)
+    async listCollections(params: ListCollectionsParams = {includeDefault: false}): Promise<ListCollectionsResult> {
+        return this.service.listCollections(params);
     }
 
     @Mutation(() => Collection)
     async createCollection(
         @Args('input') input: CreateCollectionInput
-    ): Promise<CreateCollectionResult> {
+    ): Promise<CollectionResult> {
         return this.service.createCollection(input)
     }
 
-    @Query(() => [ListDocuments])
+    @Query(() => ListDocuments)
     async listDocuments(
         @Args('input') input: ListDocumentsInput
     ): Promise<ListDocumentsResult> {

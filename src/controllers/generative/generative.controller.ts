@@ -1,6 +1,13 @@
 import {Controller, Get, Query} from "@nestjs/common";
-import {GenerativeApi} from "../../services";
-import {ApiQuery, ApiTags} from "@nestjs/swagger";
+import {GenerateResult, GenerativeApi} from "../../services";
+import {ApiOkResponse, ApiProperty, ApiQuery, ApiTags} from "@nestjs/swagger";
+
+class GenerativeResult implements GenerateResult {
+    @ApiProperty()
+    generatedText: string;
+    @ApiProperty()
+    question: string;
+}
 
 @ApiTags('generative')
 @Controller('generate')
@@ -49,6 +56,10 @@ export class GenerativeController {
         description: "The decoding method to use",
         required: false
     })
+    @ApiOkResponse({
+        type: GenerativeResult,
+        description: 'Generates a response to the given question from the information available in the data store'
+    })
     @Get()
     async generate(
         @Query('question') question: string,
@@ -58,7 +69,7 @@ export class GenerativeController {
         @Query('max_new_tokens') max_new_tokens?: string,
         @Query('decoding_method') decoding_method?: string,
         @Query('repetition_penalty') repetition_penalty?: string,
-    ) {
+    ): Promise<GenerativeResult> {
         return this.service.generate({
             question,
             collectionId,

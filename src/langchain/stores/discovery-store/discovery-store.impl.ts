@@ -5,12 +5,11 @@ import {
     AddDocumentOptions,
     CollectionResult,
     CreateCollectionOptions,
-    CreateCollectionResult,
     DiscoveryConfig,
     DiscoveryStore,
-    DiscoveryStoreParams,
+    DiscoveryStoreParams, DocumentMetadata,
     DocumentProcessor,
-    FindDocumentOptions,
+    FindDocumentOptions, GetDocumentOptions,
     ListCollectionsOptions,
     ListCollectionsResult,
     ListDocumentsOptions,
@@ -22,6 +21,9 @@ import {createDiscoveryV2} from "../../../watsonx";
 import {createHash} from "node:crypto";
 import {first} from "../../../util";
 import {getDiscoveryStoreParams} from "./discovery-store-params";
+
+class CreateCollectionResult {
+}
 
 export class DiscoveryStoreImpl implements DiscoveryStore {
     readonly discovery: DiscoveryV2;
@@ -49,6 +51,7 @@ export class DiscoveryStoreImpl implements DiscoveryStore {
             const documentId: string | undefined = await this.findDocumentByContents(document, options);
 
             if (documentId) {
+                console.log('Document already exists: ', {documentId})
                 return documentId;
             }
         }
@@ -134,17 +137,39 @@ export class DiscoveryStoreImpl implements DiscoveryStore {
             throw new Error('ProjectId is required')
         }
 
-        return {
+        const config = {
             projectId,
-            collectionIds: options.collectionIds,
-        };
+            collectionIds: [this.config.collectionId].concat(...(options.collectionIds || [])),
+        }
+
+        console.log('Created config from options: ', {options, config})
+
+        return config;
+    }
+
+    async getDocument(options: GetDocumentOptions): Promise<DocumentMetadata> {
+        return this.discovery
+            .getDocument({
+                projectId: options.projectId,
+                collectionId: options.collectionId,
+                documentId: options.documentId,
+            })
+            .then(result => result.result)
+            .then(result => {
+                console.log('Got document details: ' + JSON.stringify(result, null, '  '))
+                return {
+                    documentId: result.document_id,
+                    filename: result.filename || 'unknown',
+                    status: result.status,
+                }
+            })
     }
 
     asRetriever(options?: QueryDocumentOptions): DiscoveryRetriever {
         return new DiscoveryRetriever({discoveryStore: this, options})
     }
 
-    createCollection(options: CreateCollectionOptions): Promise<CreateCollectionResult> {
+    createCollection(options: CreateCollectionOptions): Promise<CollectionResult> {
         const projectId: string = options.projectId || this.config.projectId;
 
         return this.discovery
@@ -187,11 +212,15 @@ export class DiscoveryStoreImpl implements DiscoveryStore {
             })
             .then(response => response.result)
             .then(result => result.documents)
-            .then(documents => documents.map(doc => ({
-                documentId: doc.document_id,
-                status: doc.status,
-                filename: doc.filename,
-            })))
+            .then(documents => documents.map((doc: DiscoveryV2.DocumentDetails) => {
+                console.log('Found document: ' + JSON.stringify(doc, null, '  '))
+
+                return {
+                    documentId: doc.document_id,
+                    status: doc.status,
+                    filename: doc.filename,
+                }
+            }))
 
         return {
             documents,

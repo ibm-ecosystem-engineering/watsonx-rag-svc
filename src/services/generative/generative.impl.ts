@@ -22,7 +22,7 @@ export class GenerativeImpl implements GenerativeApi {
 
         const retriever: BaseRetriever = await this.store.asRetriever(input);
 
-        const template: string = `Answer the question based only on the following context:
+        const template: string = `Answer the question based on the following context:
 {context}
 
 Question: {question}`

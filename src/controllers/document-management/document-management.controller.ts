@@ -17,10 +17,10 @@ import {
     GetDocumentResult,
     QueryDocumentsResult
 } from "../../services";
-import {CreateCollectionResult, DocumentMetadata, ListCollectionsResult, ListDocumentsResult} from "../../langchain";
+import {CollectionResult, DocumentMetadata, ListCollectionsResult, ListDocumentsResult} from "../../langchain";
 import {FileInterceptor} from "@nestjs/platform-express";
 import {getType} from "mime";
-import {ApiProperty, ApiQuery, ApiTags} from "@nestjs/swagger";
+import {ApiOkResponse, ApiProperty, ApiQuery, ApiTags} from "@nestjs/swagger";
 import {handleOptionalNumber} from "../generative";
 
 class CreateCollection implements CreateCollectionParams {
@@ -39,20 +39,64 @@ class AddDocument {
     metadata?: any
 }
 
+class Collection implements CollectionResult {
+    @ApiProperty()
+    collectionId: string;
+    @ApiProperty({nullable: true})
+    description?: string;
+    @ApiProperty()
+    name: string;
+}
+
+class ListCollectionsData implements ListCollectionsResult {
+    @ApiProperty({
+        type: () => [Collection]
+    })
+    collections: CollectionResult[];
+}
+
+class DocumentData implements DocumentMetadata {
+    @ApiProperty()
+    documentId: string;
+    @ApiProperty()
+    filename: string;
+    @ApiProperty({nullable: true})
+    path?: string;
+    @ApiProperty()
+    status: string;
+}
+
+class ListDocumentsData implements ListDocumentsResult {
+    @ApiProperty()
+    count: number;
+    @ApiProperty({
+        type: () => [DocumentData]
+    })
+    documents: DocumentMetadata[];
+}
+
 @ApiTags('documents')
 @Controller('documents')
 export class DocumentManagementController {
     constructor(private readonly service: DocumentManagementApi) {}
 
+    @ApiOkResponse({
+        type: ListCollectionsData,
+        description: "Lists all of the collections in the project"
+    })
     @Get('collection')
-    async listCollections(): Promise<ListCollectionsResult> {
+    async listCollections(): Promise<ListCollectionsData> {
         return this.service.listCollections()
     }
 
+    @ApiOkResponse({
+        type: Collection,
+        description: "Creates a new collection in the project"
+    })
     @Post('collection')
     async createCollection(
         @Body() params: CreateCollection
-    ): Promise<CreateCollectionResult> {
+    ): Promise<Collection> {
         return this.service.createCollection(params)
     }
 
@@ -74,12 +118,16 @@ export class DocumentManagementController {
         description: "The status values to search for. If not provided all statuses will be searched.",
         required: false
     })
+    @ApiOkResponse({
+        type: ListDocumentsData,
+        description: 'Lists all of the documents in the collection'
+    })
     @Get('document')
     async listDocuments(
         @Query('collectionId') collectionId?: string,
         @Query('count') count?: string,
         @Query('status') status?: string[]
-    ): Promise<ListDocumentsResult> {
+    ): Promise<ListDocumentsData> {
         const statuses: string[] = Array.isArray(status) ? status : (status ? [status] : undefined)
 
         return this.service
