@@ -1,9 +1,8 @@
-import { Module } from '@nestjs/common';
+import {Module} from '@nestjs/common';
 import {GraphQLModule} from "@nestjs/graphql";
 import {ApolloDriver, ApolloDriverConfig} from "@nestjs/apollo";
-import {join} from 'path';
 
-import { controllers } from './controllers';
+import {controllers} from './controllers';
 import {ServiceModule} from "./services";
 import {ResolverModule} from "./resolvers";
 
@@ -13,7 +12,9 @@ const imports = [
         autoSchemaFile: 'schema.gql',
         sortSchema: true,
         subscriptions: {
-            'graphql-ws': true
+            'graphql-ws': {
+                path: '/subscription'
+            }
         },
     }),
     ServiceModule,

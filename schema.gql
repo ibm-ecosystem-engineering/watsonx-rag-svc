@@ -2,11 +2,93 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+"""Collection"""
+type Collection {
+  collectionId: String!
+  description: String
+  name: String!
+}
+
+input CreateCollectionInput {
+  description: String
+  name: String!
+}
+
+"""Document"""
+type Document {
+  documentId: String!
+  filename: String!
+  path: String
+  status: String!
+}
+
+type DocumentDetail {
+  metadata: [DocumentMetadata!]
+  pageContent: String!
+}
+
+type DocumentMetadata {
+  key: String!
+  value: String!
+}
+
+input GenerateInput {
+  collectionId: String
+  decoding_method: String
+  max_new_tokens: Float
+  min_new_tokens: Float
+  modelId: String
+  question: String!
+  repetition_penalty: Float
+}
+
+type GenerateResultGraphql {
+  generatedText: String!
+  question: String!
+}
+
 """greeting"""
 type Greeting {
   greeting: String!
 }
 
+"""Collections list"""
+type ListCollections {
+  collections: [Collection!]!
+}
+
+"""Documents list"""
+type ListDocuments {
+  count: Float!
+  documents: [Document!]!
+}
+
+input ListDocumentsInput {
+  collectionId: String
+  count: Float
+  statuses: [String!]
+}
+
+type Mutation {
+  createCollection(input: CreateCollectionInput!): Collection!
+}
+
 type Query {
+  generate(input: GenerateInput!): GenerateResultGraphql!
   helloWorld: Greeting!
+  listCollections: ListCollections!
+  listDocuments(input: ListDocumentsInput!): ListDocuments!
+  query(input: QueryDocumentsInput!): QueryDocuments!
+}
+
+type QueryDocuments {
+  count: Float!
+  documents: [DocumentDetail!]!
+}
+
+input QueryDocumentsInput {
+  collectionId: String
+  count: Float
+  filter: String
+  naturalLanguageQuery: String!
 }
