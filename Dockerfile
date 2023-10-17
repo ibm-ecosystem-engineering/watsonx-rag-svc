@@ -34,11 +34,9 @@ RUN ls -lA && \
 
 COPY --chown=1001:root licenses licenses
 COPY --chown=1001:root public public
-# COPY --chown=1001:root licenses /licenses
 
 ENV HOST=0.0.0.0 PORT=3000
 
 EXPOSE 3000/tcp
 
-#CMD ["npm", "run", "start"]
-CMD [ "node", "dist/src/main.js" ]
+CMD [ "node", "dist/main" ]
