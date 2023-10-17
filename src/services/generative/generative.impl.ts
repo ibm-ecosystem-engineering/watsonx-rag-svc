@@ -30,7 +30,8 @@ export class GenerativeImpl implements GenerativeApi {
         const template: string = `Answer the question based on the following context:
 {context}
 
-Question: {question}`
+Question: {question}
+Answer: `
 
         const serializeDocs = (docs: Document[]) => {
             const result: string = docs
