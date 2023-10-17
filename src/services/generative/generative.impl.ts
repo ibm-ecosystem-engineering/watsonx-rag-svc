@@ -8,6 +8,7 @@ import {RunnablePassthrough, RunnableSequence} from "langchain/schema/runnable";
 import {GenerateRequest, GenerateResult, GenerativeApi} from "./generative.api";
 import {documentManagementApi, DocumentManagementApi} from "../document-management";
 import {modelManagementApi, ModelManagementApi} from "../model-management";
+import {GenerateInput} from "../../graphql-types";
 
 export class GenerativeImpl implements GenerativeApi {
 
@@ -21,6 +22,10 @@ export class GenerativeImpl implements GenerativeApi {
         const model: LLM = await this.models.getModel(input);
 
         const retriever: BaseRetriever = await this.store.asRetriever(input);
+
+        if (input.question.toLowerCase() === 'what documents are available?') {
+            return this.generateDocumentList(input)
+        }
 
         const template: string = `Answer the question based on the following context:
 {context}
@@ -59,6 +64,19 @@ Question: {question}`
             question: input.question,
             generatedText,
         };
+    }
+
+    async generateDocumentList(input: GenerateInput): Promise<GenerateResult> {
+        const docs = await this.store
+            .listDocuments({
+                collectionId: input.collectionId
+            })
+            .then(response => response.documents)
+
+        return {
+            question: input.question,
+            generatedText: docs.map(doc => `${doc.documentId} - ${doc.filename}`).join('n')
+        }
     }
 
 }
